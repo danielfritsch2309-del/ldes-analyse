@@ -7,153 +7,68 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
   <header>
     <div class="header-inner">
-      <div class="header-title">
-        <span class="header-icon">⚡</span>
-        <div>
-          <h1>Batteriespeicher-Wirtschaftlichkeitsdashboard</h1>
-          <p>100 MW / 1.000 MWh Referenzsystem · Bachelorarbeit</p>
-        </div>
+      <div>
+        <h1>Batteriespeicher-Wirtschaftlichkeitsdashboard</h1>
+        <p>100 MW / 1.000 MWh Referenzsystem · Bachelorarbeit</p>
+      </div>
+      <div class="header-actions">
+        <button id="btn-export-csv" class="export-btn">⬇ CSV</button>
+        <button id="btn-export-png" class="export-btn">⬇ Chart PNG</button>
       </div>
     </div>
   </header>
 
   <main>
-
-    <!-- Scenario buttons -->
-    <section class="scenarios">
-      <button id="btn-a" class="scenario-btn scenario-a active" onclick="applyScenario('A')">
-        <span class="dot">●</span>
-        <div><strong>Szenario A</strong><small>Status quo (§118 EnWG)</small></div>
-      </button>
-      <button id="btn-b" class="scenario-btn scenario-b" onclick="applyScenario('B')">
-        <span class="dot">○</span>
-        <div><strong>Szenario B</strong><small>Reform (ohne §118)</small></div>
-      </button>
-      <button id="btn-c" class="scenario-btn scenario-c" onclick="applyScenario('C')">
-        <span class="dot">○</span>
-        <div><strong>Szenario C</strong><small>Zukunftsmarkt 2030</small></div>
-      </button>
-    </section>
-
     <div class="dashboard-layout">
 
-      <!-- ── Left: Controls ── -->
       <aside class="controls-panel">
-
-        <!-- Technology toggle -->
         <div class="control-block tech-block">
-          <span class="block-label">TECHNOLOGIE</span>
+          <span class="block-label">TECHNOLOGIE (global)</span>
           <div class="tech-toggle">
-            <button id="tech-liion"  class="tech-btn active" onclick="setTech('Li-Ion')">Li-Ion</button>
-            <button id="tech-rf"     class="tech-btn"        onclick="setTech('Redox-Flow')">Redox-Flow</button>
+            <button id="tech-liion" class="tech-btn active">Li-Ion</button>
+            <button id="tech-rf" class="tech-btn">Redox-Flow</button>
           </div>
         </div>
-
-        <!-- Market -->
-        <div class="section-divider">MARKTPARAMETER</div>
-
-        <div class="control-block">
-          <div class="slider-header">
-            <label for="spread">Arbitrage-Spread</label>
-            <span class="badge" id="spread-val">60 €/MWh</span>
-          </div>
-          <input type="range" id="spread" min="20" max="150" step="5" value="60">
-          <div class="lit" id="spread-lit">Lit: 60 €/MWh (Aurora/Agora 2025)</div>
+        <div class="tab-bar">
+          <button class="tab-btn tab-a active" id="tab-btn-A">Sz. A <span class="tab-dirty hidden" id="tab-dirty-A">●</span></button>
+          <button class="tab-btn tab-b" id="tab-btn-B">Sz. B <span class="tab-dirty hidden" id="tab-dirty-B">●</span></button>
+          <button class="tab-btn tab-c" id="tab-btn-C">Sz. C <span class="tab-dirty hidden" id="tab-dirty-C">●</span></button>
         </div>
-
-        <div class="control-block">
-          <div class="slider-header">
-            <label for="cyc">Ladezyklen</label>
-            <span class="badge" id="cyc-val">300 /a</span>
-          </div>
-          <input type="range" id="cyc" min="50" max="500" step="10" value="300">
-          <div class="lit" id="cyc-lit">Lit: 300/a (SMARD 2023–25)</div>
-        </div>
-
-        <div class="control-block">
-          <div class="slider-header">
-            <label for="eff">Effizienz</label>
-            <span class="badge" id="eff-val">0.86</span>
-          </div>
-          <input type="range" id="eff" min="0.60" max="1.00" step="0.01" value="0.86">
-          <div class="lit" id="eff-lit">Lit: 0.86 Li-Ion (Sudiarto 2026)</div>
-        </div>
-
-        <!-- Regulatory -->
-        <div class="section-divider">REGULATORIK</div>
-
-        <div class="control-block">
-          <div class="slider-header">
-            <label for="net">Netzentlastung §118</label>
-            <span class="badge" id="net-val">1.0</span>
-          </div>
-          <input type="range" id="net" min="0" max="1" step="0.1" value="1.0">
-          <div class="lit" id="net-lit">Lit: 1.0 (§118 EnWG, Status quo)</div>
-        </div>
-
-        <div class="control-block">
-          <div class="slider-header">
-            <label for="grid_fee">Netzentgelt</label>
-            <span class="badge" id="grid_fee-val">15 €/MWh</span>
-          </div>
-          <input type="range" id="grid_fee" min="0" max="40" step="1" value="15">
-          <div class="lit" id="grid_fee-lit">Lit: 15 €/MWh (BNetzA 2024)</div>
-        </div>
-
-        <div class="control-block">
-          <div class="slider-header">
-            <label for="sub">Subvention</label>
-            <span class="badge" id="sub-val">0 €/MWh</span>
-          </div>
-          <input type="range" id="sub" min="0" max="100" step="1" value="0">
-          <div class="lit" id="sub-lit">Lit: 0 €/MWh (kein Standardwert)</div>
-        </div>
-
-        <!-- Financial -->
-        <div class="section-divider">FINANZIERUNG</div>
-
-        <div class="control-block">
-          <div class="slider-header">
-            <label for="wacc">WACC</label>
-            <span class="badge" id="wacc-val">7.0 %</span>
-          </div>
-          <input type="range" id="wacc" min="0" max="0.15" step="0.01" value="0.07">
-          <div class="lit" id="wacc-lit">Lit: 0.07 (Branchenüblich, 7%)</div>
-        </div>
-
-        <div class="control-block">
-          <div class="slider-header">
-            <label for="lifetime">Lebensdauer</label>
-            <span class="badge" id="lifetime-val">12 Jahre</span>
-          </div>
-          <input type="range" id="lifetime" min="8" max="25" step="1" value="12">
-          <div class="lit" id="lifetime-lit">Lit: 12a Li-Ion (Mongird 2020)</div>
-        </div>
-
-        <div class="control-block">
-          <div class="slider-header">
-            <label for="tax">Steuersatz</label>
-            <span class="badge" id="tax-val">30.0 %</span>
-          </div>
-          <input type="range" id="tax" min="0" max="0.5" step="0.05" value="0.30">
-          <div class="lit" id="tax-lit">Lit: 0.30 (KStG §23, Deutschland)</div>
-        </div>
-
+        <div id="tab-panels"></div>
       </aside>
 
-      <!-- ── Right: Results ── -->
       <div class="results-area">
-        <div id="results-card" class="results-card"></div>
+        <div id="results-card"></div>
         <div class="chart-wrap">
-          <canvas id="chart"></canvas>
+          <div class="chart-controls">
+            <span class="chart-controls-label">Kurven:</span>
+            <label class="chart-check chart-check-a"><input type="checkbox" id="show-a" checked><span>Szenario A</span></label>
+            <label class="chart-check chart-check-b"><input type="checkbox" id="show-b" checked><span>Szenario B</span></label>
+            <label class="chart-check chart-check-c"><input type="checkbox" id="show-c" checked><span>Szenario C</span></label>
+          </div>
+          <div class="chart-container">
+            <canvas id="chart"></canvas>
+          </div>
         </div>
       </div>
 
     </div>
   </main>
+
+  <footer>
+    <div class="footer-inner">
+      <span>Daniel Fritsch · Technische Universität Berlin · 2026</span>
+      <span class="footer-sources">
+        Quellen:
+        <a href="https://atb.nrel.gov" target="_blank" rel="noopener" class="footer-link">NREL ATB 2024</a> ·
+        Viswanathan/PNNL-33283 · Sudiarto et al. (2026) · Aurora/Agora 2025 ·
+        <a href="https://www.bundesnetzagentur.de" target="_blank" rel="noopener" class="footer-link">BNetzA 2024</a> ·
+        <a href="https://www.smard.de" target="_blank" rel="noopener" class="footer-link">SMARD 2023–25</a>
+      </span>
+    </div>
+  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="script.js"></script>
