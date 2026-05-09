@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Batteriespeicher-Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <div class="header-title">
+        <span class="header-icon">⚡</span>
+        <div>
+          <h1>Batteriespeicher-Wirtschaftlichkeitsdashboard</h1>
+          <p>100 MW / 1.000 MWh Referenzsystem · Bachelorarbeit</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- Scenario buttons -->
+    <section class="scenarios">
+      <button id="btn-a" class="scenario-btn scenario-a active" onclick="applyScenario('A')">
+        <span class="dot">●</span>
+        <div><strong>Szenario A</strong><small>Status quo (§118 EnWG)</small></div>
+      </button>
+      <button id="btn-b" class="scenario-btn scenario-b" onclick="applyScenario('B')">
+        <span class="dot">○</span>
+        <div><strong>Szenario B</strong><small>Reform (ohne §118)</small></div>
+      </button>
+      <button id="btn-c" class="scenario-btn scenario-c" onclick="applyScenario('C')">
+        <span class="dot">○</span>
+        <div><strong>Szenario C</strong><small>Zukunftsmarkt 2030</small></div>
+      </button>
+    </section>
+
+    <div class="dashboard-layout">
+
+      <!-- ── Left: Controls ── -->
+      <aside class="controls-panel">
+
+        <!-- Technology toggle -->
+        <div class="control-block tech-block">
+          <span class="block-label">TECHNOLOGIE</span>
+          <div class="tech-toggle">
+            <button id="tech-liion"  class="tech-btn active" onclick="setTech('Li-Ion')">Li-Ion</button>
+            <button id="tech-rf"     class="tech-btn"        onclick="setTech('Redox-Flow')">Redox-Flow</button>
+          </div>
+        </div>
+
+        <!-- Market -->
+        <div class="section-divider">MARKTPARAMETER</div>
+
+        <div class="control-block">
+          <div class="slider-header">
+            <label for="spread">Arbitrage-Spread</label>
+            <span class="badge" id="spread-val">60 €/MWh</span>
+          </div>
+          <input type="range" id="spread" min="20" max="150" step="5" value="60">
+          <div class="lit" id="spread-lit">Lit: 60 €/MWh (Aurora/Agora 2025)</div>
+        </div>
+
+        <div class="control-block">
+          <div class="slider-header">
+            <label for="cyc">Ladezyklen</label>
+            <span class="badge" id="cyc-val">300 /a</span>
+          </div>
+          <input type="range" id="cyc" min="50" max="500" step="10" value="300">
+          <div class="lit" id="cyc-lit">Lit: 300/a (SMARD 2023–25)</div>
+        </div>
+
+        <div class="control-block">
+          <div class="slider-header">
+            <label for="eff">Effizienz</label>
+            <span class="badge" id="eff-val">0.86</span>
+          </div>
+          <input type="range" id="eff" min="0.60" max="1.00" step="0.01" value="0.86">
+          <div class="lit" id="eff-lit">Lit: 0.86 Li-Ion (Sudiarto 2026)</div>
+        </div>
+
+        <!-- Regulatory -->
+        <div class="section-divider">REGULATORIK</div>
+
+        <div class="control-block">
+          <div class="slider-header">
+            <label for="net">Netzentlastung §118</label>
+            <span class="badge" id="net-val">1.0</span>
+          </div>
+          <input type="range" id="net" min="0" max="1" step="0.1" value="1.0">
+          <div class="lit" id="net-lit">Lit: 1.0 (§118 EnWG, Status quo)</div>
+        </div>
+
+        <div class="control-block">
+          <div class="slider-header">
+            <label for="grid_fee">Netzentgelt</label>
+            <span class="badge" id="grid_fee-val">15 €/MWh</span>
+          </div>
+          <input type="range" id="grid_fee" min="0" max="40" step="1" value="15">
+          <div class="lit" id="grid_fee-lit">Lit: 15 €/MWh (BNetzA 2024)</div>
+        </div>
+
+        <div class="control-block">
+          <div class="slider-header">
+            <label for="sub">Subvention</label>
+            <span class="badge" id="sub-val">0 €/MWh</span>
+          </div>
+          <input type="range" id="sub" min="0" max="100" step="1" value="0">
+          <div class="lit" id="sub-lit">Lit: 0 €/MWh (kein Standardwert)</div>
+        </div>
+
+        <!-- Financial -->
+        <div class="section-divider">FINANZIERUNG</div>
+
+        <div class="control-block">
+          <div class="slider-header">
+            <label for="wacc">WACC</label>
+            <span class="badge" id="wacc-val">7.0 %</span>
+          </div>
+          <input type="range" id="wacc" min="0" max="0.15" step="0.01" value="0.07">
+          <div class="lit" id="wacc-lit">Lit: 0.07 (Branchenüblich, 7%)</div>
+        </div>
+
+        <div class="control-block">
+          <div class="slider-header">
+            <label for="lifetime">Lebensdauer</label>
+            <span class="badge" id="lifetime-val">12 Jahre</span>
+          </div>
+          <input type="range" id="lifetime" min="8" max="25" step="1" value="12">
+          <div class="lit" id="lifetime-lit">Lit: 12a Li-Ion (Mongird 2020)</div>
+        </div>
+
+        <div class="control-block">
+          <div class="slider-header">
+            <label for="tax">Steuersatz</label>
+            <span class="badge" id="tax-val">30.0 %</span>
+          </div>
+          <input type="range" id="tax" min="0" max="0.5" step="0.05" value="0.30">
+          <div class="lit" id="tax-lit">Lit: 0.30 (KStG §23, Deutschland)</div>
+        </div>
+
+      </aside>
+
+      <!-- ── Right: Results ── -->
+      <div class="results-area">
+        <div id="results-card" class="results-card"></div>
+        <div class="chart-wrap">
+          <canvas id="chart"></canvas>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
