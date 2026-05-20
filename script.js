@@ -59,13 +59,13 @@ const LIT = {
 // 8 colors: Li-Ion = 4 blues, Redox-Flow = 4 reds
 const CURVE_COLORS = {
   'A-Li-Ion':     {line:'#1a3a6b', fill:'rgba(26,58,107,0.12)'},
-  'B-Li-Ion':     {line:'#2563eb', fill:'rgba(37,99,235,0.12)'},
-  'C-Li-Ion':     {line:'#0891b2', fill:'rgba(8,145,178,0.12)'},
-  'D-Li-Ion':     {line:'#93c5fd', fill:'rgba(147,197,253,0.12)'},
-  'A-Redox-Flow': {line:'#7f1d1d', fill:'rgba(127,29,29,0.12)'},
-  'B-Redox-Flow': {line:'#e11d48', fill:'rgba(225,29,72,0.12)'},
-  'C-Redox-Flow': {line:'#ea580c', fill:'rgba(234,88,12,0.12)'},
-  'D-Redox-Flow': {line:'#fca5a5', fill:'rgba(252,165,165,0.12)'},
+  'B-Li-Ion':     {line:'#2979ff', fill:'rgba(41,121,255,0.12)'},
+  'C-Li-Ion':     {line:'#00acc1', fill:'rgba(0,172,193,0.12)'},
+  'D-Li-Ion':     {line:'#90caf9', fill:'rgba(144,202,249,0.12)'},
+  'A-Redox-Flow': {line:'#6d1a1a', fill:'rgba(109,26,26,0.12)'},
+  'B-Redox-Flow': {line:'#e91e8c', fill:'rgba(233,30,140,0.12)'},
+  'C-Redox-Flow': {line:'#ff6d00', fill:'rgba(255,109,0,0.12)'},
+  'D-Redox-Flow': {line:'#ffb3c6', fill:'rgba(255,179,198,0.12)'},
 };
 
 // State: tech as outer tab, scenario as inner selector
@@ -414,8 +414,10 @@ function renderChartControls() {
 
   const makeChips = (entries) => entries.map(([id, key, label]) => {
     const col = CURVE_COLORS[key].line;
-    return `<label class="chart-check" style="background:${col};border-color:${col};color:#fff">
-      <input type="checkbox" id="show-${id}" checked style="accent-color:#fff">
+    const isLight = key === 'D-Li-Ion' || key === 'D-Redox-Flow';
+    const textCol = isLight ? '#1a1d2e' : '#fff';
+    return `<label class="chart-check" style="background:${col};border-color:${col};color:${textCol}">
+      <input type="checkbox" id="show-${id}" checked style="accent-color:${textCol}">
       <span>${label}</span>
     </label>`;
   }).join('');

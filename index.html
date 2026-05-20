@@ -15,9 +15,9 @@
       <!-- Step 1 -->
       <div class="tutorial-step active" id="tut-step-1">
         
-        <h2>Willkommen im Batteriespeicher-DDDashboard für Munenjos</h2>
+        <h2>Willkommen im Batteriespeicher-Dashboard</h2>
         <p>Dieses Tool wurde im Rahmen einer Bachelorarbeit an der <strong>Technischen Universität Berlin</strong> entwickelt und ermöglicht die interaktive Wirtschaftlichkeitsanalyse von stationären Großspeichern.</p>
-        <p>Du kannst Kennzahlen wie <strong>NPV, LCOS und Break-even Spread</strong> in Echtzeit berechnen, Parameter anpassen und alle acht Szenarien gleichzeitig im Diagramm vergleichen.</p>
+        <p>Du kannst Kennzahlen wie <strong>NPV, LCOS und Break-even Spread</strong> in Echtzeit berechnen, Parameter anpassen und alle sechs Szenarien gleichzeitig im Diagramm vergleichen.</p>
         <p class="tut-hint">Das Tutorial führt dich in 4 Schritten durch alle Funktionen.</p>
         <div class="tut-actions-start">
           <button class="tut-btn-skip" id="tut-skip"> Weiter ohne On-Boarding</button>
@@ -43,7 +43,7 @@
           <div class="tut-sc tut-sc-a"><strong>Sz. A</strong> Status quo: §118 EnWG aktiv, heutige Kosten</div>
           <div class="tut-sc tut-sc-b"><strong>Sz. B</strong> Reform: §118 EnWG entfällt, gleiche Kosten</div>
           <div class="tut-sc tut-sc-c"><strong>Sz. C</strong> Zukunftsmarkt 2030: höhere Spreads, günstigere CAPEX</div>
-          <div class="tut-sc tut-sc-d"><strong>Sz. D</strong> Politisches Förderszenario 2030: Kapazitätsprämie + §118-Nachfolgeregelung</div>
+          <div class="tut-sc tut-sc-d"><strong>Sz. D</strong> Politisches Förderszenario 2030: §118-Nachfolgeregelung (50 %), Kapazitätsprämie, reduzierter WACC</div>
         </div>
         <div class="tut-nav">
           <button class="tut-btn-back" data-step="1">← Zurück</button>
@@ -61,7 +61,7 @@
         <div class="tut-list">
           <div class="tut-list-item">
             <div class="tut-list-icon" style="background:#dbeafe;color:#1d4ed8">1</div>
-            <div><strong>Technologie wählen</strong>: oben links zwischen Li-Ion (blau) und Redox-Flow (rot) wechseln. Der Tech-Tab gilt für alle vier Szenarien.</div>
+            <div><strong>Technologie wählen</strong>: oben links zwischen Li-Ion (blau) und VRFB (rot) wechseln. Der Tech-Tab gilt für alle vier Szenarien.</div>
           </div>
           <div class="tut-list-item">
             <div class="tut-list-icon" style="background:#dcfce7;color:#16a34a">2</div>
@@ -92,7 +92,7 @@
         <div class="tut-list">
           <div class="tut-list-item">
             <div class="tut-list-icon" style="background:#dbeafe;color:#1a3a6b">A</div>
-            <div><strong>Alle 8 Kurven gleichzeitig</strong>: das Diagramm zeigt Li-Ion (blau) und VRFB (rot/orange) in vier Szenarien pro Technologie.</div>
+            <div><strong>Alle 8 Kurven gleichzeitig</strong>: das Diagramm zeigt Li-Ion (blau) und VRFB (rot) für alle vier Szenarien.</div>
           </div>
           <div class="tut-list-item">
             <div class="tut-list-icon" style="background:#f0f9ff;color:#0369a1">─ ─</div>
@@ -191,15 +191,99 @@
       <span>Daniel Fritsch · Technische Universität Berlin · 2026</span>
       <span class="footer-sources">
         Quellen: <a href="https://atb.nrel.gov" target="_blank" class="footer-link">NREL ATB 2024</a> ·
-        Viswanathan/PNNL-33283 · Sudiarto et al. (2026) · Aurora/Agora 2025 ·
+        <a href=" https://www.pnnl.gov/sites/default/files/media/file/ESGC%20Cost%20Performance%20Report%202022%20PNNL-33283.pdf" target="_blank" class="footer-link">Viswanathan/PNNL-33283</a> ·
+        <a href="https://doi.org/10.1016/j.est.2025.120211" target="_blank" class="footer-link">Sudiarto et al. (2026)</a> ·
+        <a href="https://www.agora-energiewende.de" target="_blank" class="footer-link">Aurora/Agora 2025</a> ·
         <a href="https://www.bundesnetzagentur.de" target="_blank" class="footer-link">BNetzA 2024</a> ·
         <a href="https://www.smard.de" target="_blank" class="footer-link">SMARD 2023–25</a> ·
-        Kost et al. (2024), Fraunhofer ISE
+        <a href="https://www.ise.fraunhofer.de/de/veroeffentlichungen/studien/studie-stromgestehungskosten-erneuerbare-energien.html" target="_blank" class="footer-link">Kost et al. (2024), Fraunhofer ISE</a>
+      </span>
+      <span class="footer-legal">
+        <button class="footer-legal-btn" id="btn-impressum">Impressum</button>
+        <span style="opacity:0.4">·</span>
+        <button class="footer-legal-btn" id="btn-datenschutz">Datenschutz</button>
       </span>
     </div>
   </footer>
 
+  <!-- ── Impressum Modal ── -->
+  <div id="impressum-backdrop" class="legal-backdrop" style="display:none">
+    <div class="legal-modal">
+      <div class="legal-modal-header">
+        <h2>Impressum</h2>
+        <button class="legal-close" id="impressum-close">✕</button>
+      </div>
+      <div class="legal-modal-body">
+        <h3>Angaben gemäß § 5 TMG</h3>
+        <p>
+          Daniel Fritsch<br>
+          Brüsseler Straße 7<br>
+          13353 Berlin<br>
+          Deutschland
+        </p>
+        <h3>Kontakt</h3>
+        <p>E-Mail: <a href="mailto:info@ldes-overview.de">info@ldes-overview.de</a></p>
+        <h3>Hinweis</h3>
+        <p>Diese Website ist ein nicht-kommerzielles akademisches Projekt, das im Rahmen einer Bachelorarbeit an der Technischen Universität Berlin entstanden ist. Es werden keine wirtschaftlichen Interessen verfolgt.</p>
+        <h3>Haftung für Inhalte</h3>
+        <p>Die Inhalte dieser Website wurden mit größtmöglicher Sorgfalt erstellt und dienen ausschließlich Informations- und wissenschaftlichen Zwecken. Eine Gewähr für die Richtigkeit, Vollständigkeit und Aktualität der bereitgestellten Informationen und Berechnungen kann nicht übernommen werden. Die Nutzung der Inhalte erfolgt auf eigene Gefahr.</p>
+        <h3>Urheberrecht</h3>
+        <p>Die durch den Seitenbetreiber erstellten Inhalte und Werke auf dieser Website unterliegen dem deutschen Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechts bedürfen der schriftlichen Zustimmung des Autors.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Datenschutz Modal ── -->
+  <div id="datenschutz-backdrop" class="legal-backdrop" style="display:none">
+    <div class="legal-modal">
+      <div class="legal-modal-header">
+        <h2>Datenschutzerklärung</h2>
+        <button class="legal-close" id="datenschutz-close">✕</button>
+      </div>
+      <div class="legal-modal-body">
+        <h3>1. Verantwortlicher</h3>
+        <p>Verantwortlich im Sinne der DSGVO ist Daniel Fritsch (siehe Impressum).</p>
+
+        <h3>2. Erhebung und Verarbeitung personenbezogener Daten</h3>
+        <p>Diese Website erhebt und verarbeitet <strong>keine personenbezogenen Daten</strong> der Nutzer. Es werden keine Cookies gesetzt, keine Tracking-Tools eingesetzt und keine Analysedienste (z.&nbsp;B. Google Analytics) verwendet.</p>
+
+        <h3>3. Server-Logfiles</h3>
+        <p>Der Hosting-Anbieter dieser Website erhebt möglicherweise automatisch technische Zugriffsdaten in sogenannten Server-Logfiles (z.&nbsp;B. IP-Adresse, Browsertyp, Datum und Uhrzeit des Zugriffs). Diese Daten sind für den Betreiber dieser Website nicht einsehbar und werden ausschließlich vom Hosting-Anbieter verarbeitet. Informationen hierzu finden sich in der Datenschutzerklärung des jeweiligen Hosting-Anbieters.</p>
+
+        <h3>4. Externe Links</h3>
+        <p>Diese Website enthält Links zu externen Websites (NREL, PNNL, Agora Energiewende, Bundesnetzagentur, SMARD, Fraunhofer ISE). Für die Datenschutzpraktiken dieser externen Seiten ist der jeweilige Betreiber verantwortlich. Diese Website hat keinen Einfluss auf deren Inhalte oder Datenverarbeitung.</p>
+
+        <h3>5. Lokale Berechnungen</h3>
+        <p>Alle Berechnungen des Wirtschaftlichkeitsmodells werden ausschließlich lokal im Browser des Nutzers durchgeführt. Es werden keine Eingaben, Parameter oder Ergebnisse an externe Server übermittelt oder gespeichert.</p>
+
+        <h3>6. Rechte der betroffenen Personen</h3>
+        <p>Da keine personenbezogenen Daten erhoben werden, bestehen keine datenschutzrechtlichen Ansprüche gegenüber dem Betreiber dieser Website. Bei Fragen zum Datenschutz wenden Sie sich an die im Impressum angegebene E-Mail-Adresse.</p>
+
+        <h3>7. Aktualität</h3>
+        <p>Stand: Mai 2026. Diese Datenschutzerklärung kann bei Bedarf angepasst werden.</p>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="script.js"></script>
+  <script>
+    // ── Legal Modals ──
+    function openLegal(id) {
+      document.getElementById(id + '-backdrop').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+    function closeLegal(id) {
+      document.getElementById(id + '-backdrop').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+    document.getElementById('btn-impressum').addEventListener('click', () => openLegal('impressum'));
+    document.getElementById('btn-datenschutz').addEventListener('click', () => openLegal('datenschutz'));
+    document.getElementById('impressum-close').addEventListener('click', () => closeLegal('impressum'));
+    document.getElementById('datenschutz-close').addEventListener('click', () => closeLegal('datenschutz'));
+    document.getElementById('impressum-backdrop').addEventListener('click', e => { if (e.target.id === 'impressum-backdrop') closeLegal('impressum'); });
+    document.getElementById('datenschutz-backdrop').addEventListener('click', e => { if (e.target.id === 'datenschutz-backdrop') closeLegal('datenschutz'); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeLegal('impressum'); closeLegal('datenschutz'); } });
+  </script>
 </body>
 </html>
