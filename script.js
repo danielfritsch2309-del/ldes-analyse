@@ -460,7 +460,25 @@ function renderChart() {
     const p   = state[tech][sc] || defParams(sc, tech);
     const r   = calc(sc, p);
     const col = CURVE_COLORS[`${sc}-${tech}`];
-    const mainPts = r.years.map((y,i) => ({x:y, y:r.cum[i]/1e6}));
+    // Build points with vertical jumps for stack reinvest (down) and salvage (up)
+    const mainPts = [];
+    for (let i = 0; i < r.years.length; i++) {
+      const yr  = r.years[i];
+      const val = r.cum[i] / 1e6;
+      if (tech === 'Redox-Flow' && p.stack_reinvest > 0 && yr === p.stack_year) {
+        const preVal = (r.cum[i] + r.stack_cost / Math.pow(1 + p.wacc, yr)) / 1e6;
+        mainPts.push({x: yr, y: preVal});
+        mainPts.push({x: yr, y: val});
+        continue;
+      }
+      if (p.salvage > 0 && yr === p.lifetime) {
+        const preSalvage = (r.cum[i] - r.salvage_val / Math.pow(1 + p.wacc, yr)) / 1e6;
+        mainPts.push({x: yr, y: preSalvage});
+        mainPts.push({x: yr, y: val});
+        continue;
+      }
+      mainPts.push({x: yr, y: val});
+    }
 
     datasets.push({
       label:            `Sz. ${sc}: ${tech === 'Li-Ion' ? 'Li-Ion' : 'VRFB'}`,
@@ -471,47 +489,212 @@ function renderChart() {
       pointRadius:      0,
       pointHoverRadius: 5,
       fill:             false,
-      tension:          0.3,
+      tension:          0,
     });
 
     xMax = Math.max(xMax, p.lifetime + 4);
-    lifetimeLines.push({x: p.lifetime, npv: r.npv/1e6, color: col.line});
+    // Store tech and sc alongside line info for correct labeling
+    lifetimeLines.push({x: p.lifetime, npv: r.npv/1e6, color: col.line, tech, sc});
   });
 
   if (myChart) { myChart.destroy(); myChart = null; }
   if (datasets.length === 0) return;
-const whiteBgPlugin = {
-  id: 'whiteBg',
-  beforeDraw(chart) {
-    const ctx = chart.ctx;
-    ctx.save();
-    ctx.globalCompositeOperation = 'destination-over';
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, chart.width, chart.height);
-    ctx.restore();
-  }
-};
+
+  const whiteBgPlugin = {
+    id: 'whiteBg',
+    beforeDraw(chart) {
+      const ctx = chart.ctx;
+      ctx.save();
+      ctx.globalCompositeOperation = 'destination-over';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, chart.width, chart.height);
+      ctx.restore();
+    }
+  };
+
   const lifetimePlugin = {
     id: 'lifetimeLines',
     afterDraw(chart) {
       const ctx = chart.ctx, xA = chart.scales.x, yA = chart.scales.y;
-      lifetimeLines.forEach(({x, npv, color}) => {
-        const xPx = xA.getPixelForValue(x);
-        const yTop = yA.getPixelForValue(npv);
+
+      const rendered = lifetimeLines.map(({x, npv, color, tech, sc}) => ({
+        x, npv, color, tech, sc,
+        xPx: xA.getPixelForValue(x),
+        yPx: yA.getPixelForValue(npv),
+      }));
+
+      // Spread overlapping labels vertically — check pure Y proximity (labels can collide even at different X)
+      const labelOffsets = rendered.map(() => 0);
+      const MIN_LABEL_GAP = 18; // px minimum vertical gap between labels
+      for (let i = 0; i < rendered.length; i++) {
+        for (let j = i + 1; j < rendered.length; j++) {
+          const dy = Math.abs(rendered[i].yPx - rendered[j].yPx);
+          if (dy < MIN_LABEL_GAP) {
+            // Push apart: higher curve label goes up, lower goes down
+            if (rendered[i].yPx <= rendered[j].yPx) {
+              labelOffsets[i] = -MIN_LABEL_GAP;
+              labelOffsets[j] = +MIN_LABEL_GAP;
+            } else {
+              labelOffsets[i] = +MIN_LABEL_GAP;
+              labelOffsets[j] = -MIN_LABEL_GAP;
+            }
+          }
+        }
+      }
+
+      // Compute final label Y positions — avoid zero line, avoid dot, keep mutual gap
+      const yZeroPx = yA.getPixelForValue(0);
+      const ZERO_CLEAR = 14;
+      const LABEL_H = 16;
+      const GAP = 20;
+
+      // Step 1: base positions with peer-offset
+      const finalLabelY = rendered.map((item, idx) => {
+        let ly = item.yPx + labelOffsets[idx];
+        // avoid zero line
+        if (Math.abs(ly - yZeroPx) < ZERO_CLEAR + LABEL_H) {
+          ly = item.npv < 0
+            ? yZeroPx + ZERO_CLEAR + LABEL_H
+            : yZeroPx - ZERO_CLEAR;
+        }
+        // avoid dot itself
+        if (Math.abs(ly - item.yPx) < LABEL_H) {
+          ly = item.npv < 0 ? item.yPx + LABEL_H + 4 : item.yPx - LABEL_H - 4;
+        }
+        return ly;
+      });
+
+      // Step 2: re-check mutual gap after zero-line correction
+      for (let i = 0; i < finalLabelY.length; i++) {
+        for (let j = i + 1; j < finalLabelY.length; j++) {
+          const diff = finalLabelY[j] - finalLabelY[i];
+          if (Math.abs(diff) < GAP) {
+            const mid = (finalLabelY[i] + finalLabelY[j]) / 2;
+            finalLabelY[i] = mid - GAP / 2;
+            finalLabelY[j] = mid + GAP / 2;
+          }
+        }
+      }
+
+      // Draw lifetime end markers
+      rendered.forEach((item, idx) => {
+        const {xPx, yPx, npv, color, tech, sc} = item;
         const yBot = yA.bottom;
+        const labelY = finalLabelY[idx];
+        const techShort = tech === 'Li-Ion' ? 'Li-Ion' : 'VRFB';
+
+        // Dashed vertical line
         ctx.save();
         ctx.beginPath(); ctx.setLineDash([5,4]);
         ctx.strokeStyle = color; ctx.lineWidth = 1.2; ctx.globalAlpha = 0.6;
-        ctx.moveTo(xPx, yBot); ctx.lineTo(xPx, yTop); ctx.stroke();
+        ctx.moveTo(xPx, yBot); ctx.lineTo(xPx, yPx); ctx.stroke();
+
+        // Dot at end of curve
         ctx.beginPath(); ctx.setLineDash([]); ctx.globalAlpha = 1;
-        ctx.fillStyle = color; ctx.arc(xPx, yTop, 4, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = color; ctx.font = 'bold 10px Segoe UI,sans-serif';
+        ctx.fillStyle = color; ctx.arc(xPx, yPx, 4, 0, Math.PI*2); ctx.fill();
+
+        // NPV label
+        ctx.font = 'bold 13px Segoe UI,sans-serif';
         ctx.textAlign = 'left';
-        ctx.fillText(`${npv.toFixed(1)} Mio€`, xPx+6, yTop+4);
+        const labelText = `${npv.toFixed(1)} Mio€`;
+        const textX = xPx + 6;
+        const isLiIonD = tech === 'Li-Ion' && sc === 'D';
+        // Li-Ion Sz D: pin on zero line with white bg; VRFB: slightly below dot; rest: normal
+        const drawY = isLiIonD ? yZeroPx + 5 : (tech === 'Redox-Flow' ? yPx + 20 : yPx + 4);
+        ctx.save();
+        if (isLiIonD) {
+          const textW = ctx.measureText(labelText).width;
+          ctx.fillStyle = 'rgba(255,255,255,0.85)';
+          ctx.fillRect(textX - 2, drawY - 14, textW + 4, 18);
+        }
         ctx.restore();
+        ctx.fillStyle = '#333333';
+        ctx.fillText(labelText, textX, drawY);
+
+        // "Ende LZ" label just above x axis in black
+        // If two labels share the same x pixel, offset one up and one down
+        const sameXItems = rendered.filter(r2 => Math.abs(r2.xPx - xPx) < 5);
+        const myRank = sameXItems.indexOf(item);
+        const stackOffset = sameXItems.length > 1 ? (myRank === 0 ? -16 : 0) : 0;
+        ctx.fillStyle = '#333333';
+        ctx.font = '12px Segoe UI,sans-serif';
+        ctx.globalAlpha = 1;
+        ctx.textAlign = 'center';
+        ctx.fillText(`Ende LZ ${techShort}`, xPx, yBot - 6 + stackOffset);
+        ctx.restore();
+      });
+
+      // Draw Stack-Reinvestition and Salvage Value annotations for VRFB curves only
+      // Use a Set to avoid drawing duplicate annotations when multiple VRFB scenarios share stack_year
+      const drawnStackYears = new Set();
+      entries.forEach(([cbId, sc, tech]) => {
+        const cb = document.getElementById(`show-${cbId}`);
+        if (!cb || !cb.checked) return;
+        if (tech !== 'Redox-Flow') return;
+
+        const p   = state[tech][sc] || defParams(sc, tech);
+        const col = CURVE_COLORS[`${sc}-${tech}`].line;
+        const r   = calc(sc, p);
+
+        // Stack-Reinvestition: draw label with leader line, clamped above x-axis
+        if (p.stack_reinvest > 0 && !drawnStackYears.has(`${sc}-${p.stack_year}`)) {
+          drawnStackYears.add(`${sc}-${p.stack_year}`);
+          const stackX    = xA.getPixelForValue(p.stack_year);
+          const stackNPV  = r.cum[p.stack_year] / 1e6;
+          const stackY    = yA.getPixelForValue(stackNPV);
+          const labelEndX = stackX - 40;
+          // Clamp label so it stays at least 30px above x-axis
+          const rawStackLabelY = stackY + 30;
+          const labelEndY = Math.min(rawStackLabelY, yA.bottom - 30);
+          ctx.save();
+          ctx.beginPath();
+          ctx.setLineDash([3, 3]);
+          ctx.strokeStyle = col;
+          ctx.lineWidth   = 1.2;
+          ctx.globalAlpha = 0.8;
+          ctx.moveTo(stackX, stackY);
+          ctx.lineTo(labelEndX, labelEndY);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle   = '#333333';
+          ctx.font        = 'italic 12px Segoe UI,sans-serif';
+          ctx.globalAlpha = 1;
+          ctx.textAlign   = 'right';
+          ctx.fillText('Stack-Reinvestition', labelEndX - 2, labelEndY + 4);
+          ctx.restore();
+        }
+
+        // Salvage Value: label with dashed leader line
+        // If curve is low (near x-axis), draw label above-right instead of below-right
+        if (p.salvage > 0) {
+          const salvX   = xA.getPixelForValue(p.lifetime);
+          const salvNPV = r.npv / 1e6;
+          const salvY   = yA.getPixelForValue(salvNPV);
+          const spaceBelow = yA.bottom - salvY;
+          const goAbove = spaceBelow < 80;
+          const labelX  = salvX + 20;
+          const labelY  = goAbove ? salvY - 30 : Math.min(salvY + 35, yA.bottom - 30);
+          ctx.save();
+          ctx.beginPath();
+          ctx.setLineDash([3, 3]);
+          ctx.strokeStyle = col;
+          ctx.lineWidth   = 1.2;
+          ctx.globalAlpha = 0.8;
+          ctx.moveTo(salvX, salvY);
+          ctx.lineTo(labelX, labelY);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle   = '#333333';
+          ctx.font        = 'italic 12px Segoe UI,sans-serif';
+          ctx.globalAlpha = 1;
+          ctx.textAlign   = 'left';
+          ctx.fillText('Salvage Value', labelX + 2, labelY + 4);
+          ctx.restore();
+        }
       });
     }
   };
+  
 
   myChart = new Chart(document.getElementById('chart'), {
     type: 'line',
@@ -522,14 +705,27 @@ const whiteBgPlugin = {
       interaction: {mode:'index', intersect:false},
       scales: {
         x: {type:'linear', min:0, max:30,
-            title:{display:true, text:'Jahr', color:'#6b7280', font:{size:11}},
-            grid:{color:'#e5e7eb'}, ticks:{color:'#6b7280', stepSize:5}},
-        y: {min:-400, max:100,
-            title:{display:true, text:'Kumulierter Kapitalwert [Mio€]', color:'#6b7280', font:{size:11}},
-            grid:{color:'#e5e7eb'}, ticks:{color:'#6b7280', stepSize:50, callback:v=>v+' Mio€'}},
+            title:{display:true, text:'Jahr', color:'#6b7280', font:{size:14}},
+            grid:{color:'#e5e7eb'}, ticks:{color:'#6b7280', stepSize:5, font:{size:13}}},
+        y: {min:-450, max:100,
+            title:{display:true, text:'Kumulierter Kapitalwert [Mio€]', color:'#6b7280', font:{size:14}},
+            grid:{color: ctx => ctx.tick.value === 0 ? '#e53e3e' : '#e5e7eb',
+                  lineWidth: ctx => ctx.tick.value === 0 ? 2 : 1},
+            ticks:{color:'#6b7280', stepSize:50, font:{size:13}, callback:v=>v+' Mio€'}},
       },
       plugins: {
-        legend: {display: false},
+        legend: {display: true, labels: {color:'#1a1d2e', font:{size:14}, boxWidth:24, padding:10, usePointStyle: false,
+          generateLabels(chart) {
+            return chart.data.datasets.map((ds, i) => ({
+              text: ds.label,
+              fillStyle: ds.borderColor,
+              strokeStyle: ds.borderColor,
+              lineWidth: 0,
+              hidden: !chart.isDatasetVisible(i),
+              datasetIndex: i,
+            }));
+          }
+        }},
         tooltip: {
           backgroundColor:'#ffffffee', borderColor:'#dde1ea', borderWidth:1,
           titleColor:'#1a1d2e', bodyColor:'#6b7280',
