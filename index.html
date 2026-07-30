@@ -14,13 +14,13 @@
 
       <!-- Step 1 -->
       <div class="tutorial-step active" id="tut-step-1">
-        
         <h2>Willkommen im Batteriespeicher-Dashboard</h2>
-        <p>Dieses Tool wurde im Rahmen einer Bachelorarbeit an der <strong>Technischen Universität Berlin</strong> entwickelt und ermöglicht die interaktive Wirtschaftlichkeitsanalyse von stationären Großspeichern.</p>
-        <p>Du kannst Kennzahlen wie <strong>NPV, LCOS und Break-even Spread</strong> in Echtzeit berechnen, Parameter anpassen und alle sechs Szenarien gleichzeitig im Diagramm vergleichen.</p>
-        <p class="tut-hint">Das Tutorial führt dich in 4 Schritten durch alle Funktionen.</p>
+        <div class="tut-step-content">
+          <p>Interaktive Wirtschaftlichkeitsanalyse von LDES-Systemen — entwickelt im Rahmen einer Bachelorarbeit an der <strong>TU Berlin</strong>.</p>
+          <p class="tut-hint">Das Tutorial führt dich in 4 Schritten durch alle Funktionen.</p>
+        </div>
         <div class="tut-actions-start">
-          <button class="tut-btn-skip" id="tut-skip"> Weiter ohne On-Boarding</button>
+          <button class="tut-btn-skip" id="tut-skip">Weiter ohne On-Boarding</button>
           <button class="tut-btn-next" id="tut-start">Los geht's →</button>
         </div>
       </div>
@@ -29,21 +29,23 @@
       <div class="tutorial-step" id="tut-step-2">
         <div class="tut-step-label">Schritt 1 von 4</div>
         <h2>Technologien & Szenarien</h2>
-        <div class="tut-grid">
-          <div class="tut-card tut-card-li">
-            <div class="tut-card-title">Li-Ion</div>
-            <p>Lithium-Ionen-Batterien: marktdominant, höhere Degradation (1,5%/a), kürzere Lebensdauer (12–20a), kein Stack-Tausch nötig.</p>
+        <div class="tut-step-content">
+          <div class="tut-grid">
+            <div class="tut-card tut-card-li">
+              <div class="tut-card-title">Li-Ion</div>
+              <p>Lithium-Ionen-Batterien: marktdominant, höhere Degradation (1,5%/a), kürzere Lebensdauer (12–20a), kein Stack-Tausch nötig.</p>
+            </div>
+            <div class="tut-card tut-card-rf">
+              <div class="tut-card-title">Redox-Flow (VRFB)</div>
+              <p>Vanadium-Redox-Flow-Batterien: längere Lebensdauer (20–25a), geringere Degradation (0,2%/a), Mid-life Refurbishment in Jahr 15, Vanadium-Restwert am Ende.</p>
+            </div>
           </div>
-          <div class="tut-card tut-card-rf">
-            <div class="tut-card-title">Redox-Flow (VRFB)</div>
-            <p>Vanadium-Redox-Flow-Batterien: längere Lebensdauer (20–25a), geringere Degradation (0,2%/a), Mid-life Refurbishment in Jahr 15, Vanadium-Restwert am Ende.</p>
+          <div class="tut-scenarios">
+            <div class="tut-sc tut-sc-a"><strong>Sz. A</strong> Status quo: §118 EnWG aktiv, heutige Kosten</div>
+            <div class="tut-sc tut-sc-b"><strong>Sz. B</strong> Reform: §118 EnWG entfällt, gleiche Kosten</div>
+            <div class="tut-sc tut-sc-c"><strong>Sz. C</strong> Zukunftsmarkt 2030: höhere Spreads, günstigere CAPEX</div>
+            <div class="tut-sc tut-sc-d"><strong>Sz. D</strong> Politisches Förderszenario 2030: §118-Nachfolgeregelung (50 %), Kapazitätsprämie, reduzierter WACC</div>
           </div>
-        </div>
-        <div class="tut-scenarios">
-          <div class="tut-sc tut-sc-a"><strong>Sz. A</strong> Status quo: §118 EnWG aktiv, heutige Kosten</div>
-          <div class="tut-sc tut-sc-b"><strong>Sz. B</strong> Reform: §118 EnWG entfällt, gleiche Kosten</div>
-          <div class="tut-sc tut-sc-c"><strong>Sz. C</strong> Zukunftsmarkt 2030: höhere Spreads, günstigere CAPEX</div>
-          <div class="tut-sc tut-sc-d"><strong>Sz. D</strong> Politisches Förderszenario 2030: §118-Nachfolgeregelung (50 %), Kapazitätsprämie, reduzierter WACC</div>
         </div>
         <div class="tut-nav">
           <button class="tut-btn-back" data-step="1">← Zurück</button>
@@ -58,22 +60,24 @@
       <div class="tutorial-step" id="tut-step-3">
         <div class="tut-step-label">Schritt 2 von 4</div>
         <h2>Regler & Parameter</h2>
-        <div class="tut-list">
-          <div class="tut-list-item">
-            <div class="tut-list-icon" style="background:#dbeafe;color:#1d4ed8">1</div>
-            <div><strong>Technologie wählen</strong>: oben links zwischen Li-Ion (blau) und VRFB (rot) wechseln. Der Tech-Tab gilt für alle vier Szenarien.</div>
-          </div>
-          <div class="tut-list-item">
-            <div class="tut-list-icon" style="background:#dcfce7;color:#16a34a">2</div>
-            <div><strong>Szenario wählen</strong>: Sz. A, B, C oder D auswählen. Jedes Szenario hat eigene Regler, die unabhängig voneinander gespeichert werden.</div>
-          </div>
-          <div class="tut-list-item">
-            <div class="tut-list-icon" style="background:#fef9c3;color:#854d0e">3</div>
-            <div><strong>Parameter anpassen</strong>: Regler für Spread, Zyklen, WACC etc. verschieben. Der orangene Punkt <span style="color:#f59e0b;font-weight:700">●</span> am Tab zeigt an, dass du vom Literaturwert abweichst.</div>
-          </div>
-          <div class="tut-list-item">
-            <div class="tut-list-icon" style="background:#fee2e2;color:#dc2626">4</div>
-            <div><strong>Reset</strong>: der ↺ Reset-Button stellt die Literaturwerte für das aktive Szenario wieder her. Pfeiltasten ← → ermöglichen präzise Einstellungen.</div>
+        <div class="tut-step-content">
+          <div class="tut-list">
+            <div class="tut-list-item">
+              <div class="tut-list-icon" style="background:#dbeafe;color:#1d4ed8">1</div>
+              <div><strong>Technologie wählen</strong>: oben links zwischen Li-Ion (blau) und Redox-Flow (rot) wechseln. Der Tech-Tab gilt für alle vier Szenarien.</div>
+            </div>
+            <div class="tut-list-item">
+              <div class="tut-list-icon" style="background:#dcfce7;color:#16a34a">2</div>
+              <div><strong>Szenario wählen</strong>: Sz. A, B, C oder D auswählen. Jedes Szenario hat eigene Regler, die unabhängig voneinander gespeichert werden.</div>
+            </div>
+            <div class="tut-list-item">
+              <div class="tut-list-icon" style="background:#fef9c3;color:#854d0e">3</div>
+              <div><strong>Parameter anpassen</strong>: Regler für Spread, Zyklen, WACC etc. verschieben. Der orangene Punkt <span style="color:#f59e0b;font-weight:700">●</span> am Tab zeigt an, dass du vom Literaturwert abweichst.</div>
+            </div>
+            <div class="tut-list-item">
+              <div class="tut-list-icon" style="background:#fee2e2;color:#dc2626">4</div>
+              <div><strong>Reset</strong>: der ↺ Reset-Button stellt die Literaturwerte für das aktive Szenario wieder her. Pfeiltasten ← → ermöglichen präzise Einstellungen.</div>
+            </div>
           </div>
         </div>
         <div class="tut-nav">
@@ -89,22 +93,24 @@
       <div class="tutorial-step" id="tut-step-4">
         <div class="tut-step-label">Schritt 3 von 4</div>
         <h2>Diagramm & Kurvenvergleich</h2>
-        <div class="tut-list">
-          <div class="tut-list-item">
-            <div class="tut-list-icon" style="background:#dbeafe;color:#1a3a6b">A</div>
-            <div><strong>Alle 8 Kurven gleichzeitig</strong>: das Diagramm zeigt Li-Ion (blau) und VRFB (rot) für alle vier Szenarien.</div>
-          </div>
-          <div class="tut-list-item">
-            <div class="tut-list-icon" style="background:#f0f9ff;color:#0369a1">─ ─</div>
-            <div><strong>Gestrichelte Linie</strong>: zeigt den extrapolierten Verlauf nach Ende der technischen Lebensdauer. Der Punkt markiert den NPV am Lebensdauerende.</div>
-          </div>
-          <div class="tut-list-item">
-            <div class="tut-list-icon" style="background:#f3f4f6;color:#374151">☑</div>
-            <div><strong>Kurven ein-/ausblenden</strong>: die farbigen Checkboxen über dem Diagramm schalten einzelne Kurven an oder aus, ohne die Berechnung zu verändern.</div>
-          </div>
-          <div class="tut-list-item">
-            <div class="tut-list-icon" style="background:#dcfce7;color:#16a34a">↓</div>
-            <div><strong>Export</strong>: oben rechts kannst du das Diagramm als PNG oder alle Ergebnisse als CSV exportieren.</div>
+        <div class="tut-step-content">
+          <div class="tut-list">
+            <div class="tut-list-item">
+              <div class="tut-list-icon" style="background:#dbeafe;color:#1a3a6b">A</div>
+              <div><strong>Alle 8 Kurven gleichzeitig</strong>: das Diagramm zeigt Li-Ion (blau) und VRFB (rot) für alle vier Szenarien.</div>
+            </div>
+            <div class="tut-list-item">
+              <div class="tut-list-icon" style="background:#f0f9ff;color:#0369a1">─ ─</div>
+              <div><strong>Gestrichelte Linie</strong>: zeigt den extrapolierten Verlauf nach Ende der technischen Lebensdauer. Der Punkt markiert den NPV am Lebensdauerende.</div>
+            </div>
+            <div class="tut-list-item">
+              <div class="tut-list-icon" style="background:#f3f4f6;color:#374151">☑</div>
+              <div><strong>Kurven ein-/ausblenden</strong>: die farbigen Checkboxen über dem Diagramm schalten einzelne Kurven an oder aus, ohne die Berechnung zu verändern.</div>
+            </div>
+            <div class="tut-list-item">
+              <div class="tut-list-icon" style="background:#dcfce7;color:#16a34a">↓</div>
+              <div><strong>Export</strong>: oben rechts kannst du das Diagramm als PNG oder alle Ergebnisse als CSV exportieren.</div>
+            </div>
           </div>
         </div>
         <div class="tut-nav">
@@ -120,22 +126,24 @@
       <div class="tutorial-step" id="tut-step-5">
         <div class="tut-step-label">Schritt 4 von 4</div>
         <h2>Wertetabelle & Formeln</h2>
-        <div class="tut-list">
-          <div class="tut-list-item">
-            <div class="tut-list-icon" style="background:#f3f4f6;color:#374151">i</div>
-            <div><strong>Formel-Badge</strong>: das kleine <em>i</em> neben jedem Kennzahl-Namen zeigt beim Hovern die vollständige Formel mit eingesetzten Werten und Quellenangabe.</div>
-          </div>
-          <div class="tut-list-item">
-            <div class="tut-list-icon" style="background:#dbeafe;color:#1d4ed8">≡</div>
-            <div><strong>Erläuterungsspalte</strong>: die rechte Spalte gibt eine kurze Einzeiler-Erklärung. Die Formeln und Quellen findest du im i-Badge.</div>
-          </div>
-          <div class="tut-list-item">
-            <div class="tut-list-icon" style="background:#fef9c3;color:#854d0e">KPI</div>
-            <div><strong>KPI-Karten</strong>: die fünf Karten oben zeigen CAPEX, NPV, Amortisation, LCOS und Break-even Spread für das aktive Szenario auf einen Blick.</div>
-          </div>
-          <div class="tut-list-item">
-            <div class="tut-list-icon" style="background:#dcfce7;color:#16a34a">?</div>
-            <div><strong>Tutorial erneut öffnen</strong>: das Tutorial ist jederzeit über den <strong>?-Button</strong> oben rechts im Header erreichbar.</div>
+        <div class="tut-step-content">
+          <div class="tut-list">
+            <div class="tut-list-item">
+              <div class="tut-list-icon" style="background:#f3f4f6;color:#374151">i</div>
+              <div><strong>Formel-Badge</strong>: das kleine <em>i</em> neben jedem Kennzahl-Namen zeigt beim Hovern die vollständige Formel mit eingesetzten Werten und Quellenangabe.</div>
+            </div>
+            <div class="tut-list-item">
+              <div class="tut-list-icon" style="background:#dbeafe;color:#1d4ed8">≡</div>
+              <div><strong>Erläuterungsspalte</strong>: die rechte Spalte gibt eine kurze Einzeiler-Erklärung. Die Formeln und Quellen findest du im i-Badge.</div>
+            </div>
+            <div class="tut-list-item">
+              <div class="tut-list-icon" style="background:#fef9c3;color:#854d0e">KPI</div>
+              <div><strong>KPI-Karten</strong>: die fünf Karten oben zeigen CAPEX, NPV, Amortisation, LCOS und Break-even Spread für das aktive Szenario auf einen Blick.</div>
+            </div>
+            <div class="tut-list-item">
+              <div class="tut-list-icon" style="background:#dcfce7;color:#16a34a">?</div>
+              <div><strong>Tutorial erneut öffnen</strong>: das Tutorial ist jederzeit über den <strong>?-Button</strong> oben rechts im Header erreichbar.</div>
+            </div>
           </div>
         </div>
         <div class="tut-nav">
@@ -191,7 +199,7 @@
       <span>Daniel Fritsch · Technische Universität Berlin · 2026</span>
       <span class="footer-sources">
         Quellen: <a href="https://atb.nrel.gov" target="_blank" class="footer-link">NREL ATB 2024</a> ·
-        <a href=" https://www.pnnl.gov/sites/default/files/media/file/ESGC%20Cost%20Performance%20Report%202022%20PNNL-33283.pdf" target="_blank" class="footer-link">Viswanathan/PNNL-33283</a> ·
+        <a href="https://www.pnnl.gov/sites/default/files/media/file/ESGC%20Cost%20Performance%20Report%202022%20PNNL-33283.pdf" target="_blank" class="footer-link">Viswanathan/PNNL-33283</a> ·
         <a href="https://doi.org/10.1016/j.est.2025.120211" target="_blank" class="footer-link">Sudiarto et al. (2026)</a> ·
         <a href="https://www.agora-energiewende.de" target="_blank" class="footer-link">Aurora/Agora 2025</a> ·
         <a href="https://www.bundesnetzagentur.de" target="_blank" class="footer-link">BNetzA 2024</a> ·

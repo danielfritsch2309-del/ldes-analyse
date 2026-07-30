@@ -91,7 +91,7 @@ function getCapex(sc, tech) {
   return t.capex_power * t.power_mw + t.capex_energy * t.energy_mwh;
 }
 
-function computeCF(capex, annual_cf, lifetime, wacc, deg, stack_cost, stack_year, salvage_val) {
+function computeCF(capex, cf_var, cf_fix, lifetime, wacc, deg, stack_cost, stack_year, salvage_val) {
   const years = [0], cum = [-capex];
   let payback = null;
   for (let t = 1; t <= lifetime; t++) {
@@ -99,7 +99,9 @@ function computeCF(capex, annual_cf, lifetime, wacc, deg, stack_cost, stack_year
     const deg_factor = (stack_cost > 0 && t > stack_year)
       ? Math.pow(1 - eff_deg, t - stack_year - 1)
       : Math.pow(1 - deg, t - 1);
-    let cf_t = annual_cf * deg_factor / Math.pow(1 + wacc, t);
+    // Degradation wirkt nur auf durchsatzbasierte Erlöse (Arbitrage, Netzentgelt-Ersparnis),
+    // nicht auf fixe Größen (OPEX, Kapazitätsprämie)
+    let cf_t = (cf_var * deg_factor + cf_fix) / Math.pow(1 + wacc, t);
     if (stack_cost > 0 && t === stack_year) cf_t -= stack_cost / Math.pow(1 + wacc, t);
     if (t === lifetime && salvage_val > 0)  cf_t += salvage_val / Math.pow(1 + wacc, t);
     cum.push(cum[t-1] + cf_t);
@@ -113,7 +115,7 @@ function computeCF(capex, annual_cf, lifetime, wacc, deg, stack_cost, stack_year
     const MAX = lifetime * 2;
     for (let i = 1; i <= MAX - lifetime; i++) {
       const t   = lifetime + i;
-      const dcf = annual_cf * Math.pow(1-deg, t-1) / Math.pow(1+wacc, t);
+      const dcf = (cf_var * Math.pow(1-deg, t-1) + cf_fix) / Math.pow(1+wacc, t);
       prev += dcf;
       if (prev >= 0) { extraPayback = lifetime + i - 1 + (-( prev-dcf) / dcf); break; }
     }
@@ -131,10 +133,13 @@ function calcLCOS(capex, opex, mwh, cyc, life, wacc, deg, stack_cost, salvage_va
 }
 
 function calcBE(capex, opex, mwh, cyc, eff, net, gf, sub, tax, life, wacc, deg) {
-  let ds = 0;
-  for (let t = 1; t <= life; t++) ds += Math.pow(1-deg, t-1) / Math.pow(1+wacc, t);
-  const A = cyc * mwh * eff * (1-tax) * ds;
-  const B = (net * gf * mwh * cyc + sub - opex) * (1-tax) * ds;
+  let ds_deg = 0, ds_plain = 0;
+  for (let t = 1; t <= life; t++) {
+    ds_deg   += Math.pow(1-deg, t-1) / Math.pow(1+wacc, t); // durchsatzbasiert (degradiert)
+    ds_plain += 1 / Math.pow(1+wacc, t);                     // fix (keine Degradation)
+  }
+  const A = cyc * mwh * eff * (1-tax) * ds_deg;
+  const B = (net * gf * mwh * cyc) * (1-tax) * ds_deg + (sub - opex) * (1-tax) * ds_plain;
   if (A <= 0) return '>600';
   const s = Math.ceil((capex - B) / A);
   return s <= 0 ? 1 : s > 600 ? '>600' : s;
@@ -148,8 +153,12 @@ function calc(sc, p) {
   const stack_year  = parseInt(p.stack_year)||15;
   const salvage_val = cap * (p.salvage||0);
   const sub_annual = p.sub * td.power_mw * 1000;
-  const annual_cf  = (p.cyc*mwh*p.spread*p.eff + p.net*p.grid_fee*mwh*p.cyc + sub_annual - opex) * (1-p.tax);
-  const {years, cum, payback, extraPayback} = computeCF(cap, annual_cf, p.lifetime, p.wacc, deg, stack_cost, stack_year, salvage_val);
+  // Durchsatzbasierte Erlöse (Arbitrage, Netzentgelt-Ersparnis) degradieren mit der Batterie;
+  // fixe Größen (OPEX, Kapazitätsprämie) sind kapazitäts-/anlagenbezogen und degradieren nicht
+  const cf_var = (p.cyc*mwh*p.spread*p.eff + p.net*p.grid_fee*mwh*p.cyc) * (1-p.tax);
+  const cf_fix = (sub_annual - opex) * (1-p.tax);
+  const annual_cf = cf_var + cf_fix;
+  const {years, cum, payback, extraPayback} = computeCF(cap, cf_var, cf_fix, p.lifetime, p.wacc, deg, stack_cost, stack_year, salvage_val);
   const lcos = calcLCOS(cap, opex, mwh, p.cyc, p.lifetime, p.wacc, deg, stack_cost, salvage_val);
   const be = calcBE(cap, opex, mwh, p.cyc, p.eff, p.net, p.grid_fee, sub_annual, p.tax, p.lifetime, p.wacc, deg);
   let paybackStr;
@@ -162,7 +171,7 @@ function calc(sc, p) {
     extraPts.push({x: p.lifetime, y: prev/1e6});
     for (let i = 1; i <= p.lifetime; i++) {
       const t = p.lifetime + i;
-      prev += annual_cf * Math.pow(1-deg, t-1) / Math.pow(1+p.wacc, t);
+      prev += (cf_var * Math.pow(1-deg, t-1) + cf_fix) / Math.pow(1+p.wacc, t);
       extraPts.push({x: t, y: prev/1e6});
     }
   }
@@ -379,7 +388,7 @@ function renderKPI(tech, sc) {
             ['OPEX (fix)', '−'+fM(r.opex_at)+'/a', 'Betriebs- & Wartungskosten nach Steuer',
              `Jährliche Betriebs- & Wartungskosten (fix)\nFormel: OPEX_netto = OPEX × (1 − τ)\nEingesetzt: OPEX_netto = ${fM(r.opex)} × (1 − ${p.tax}) = ${fM(r.opex_at)}/a\nSteuerlich als Betriebsausgabe absetzbar\nQuelle: NREL ATB 2024, PNNL-33283`],
             ['Jährl. Cashflow', fM(r.annual_cf)+'/a', 'Netto-Erlös Jahr 1 nach Steuer & OPEX',
-             `Netto-Cashflow im ersten Betriebsjahr\nFormel: CF = (Arb + NE + Sub − OPEX) × (1 − τ)\nEingesetzt: CF = (${fM(r.arb_at)} + ${fM(r.grid_at)} − ${fM(r.opex_at)}) = ${fM(r.annual_cf)}/a\nSinkt jährlich durch Degradation (δ = ${(r.deg*100).toFixed(2)}%)\nWACC = ${(p.wacc*100).toFixed(1)}% (Kost et al. 2024, Fraunhofer ISE)`],
+             `Netto-Cashflow im ersten Betriebsjahr\nFormel: CF = (Arb + NE + Sub − OPEX) × (1 − τ)\nEingesetzt: CF = (${fM(r.arb_at)} + ${fM(r.grid_at)} − ${fM(r.opex_at)}) = ${fM(r.annual_cf)}/a\nArb & NE sinken jährlich durch Degradation (δ = ${(r.deg*100).toFixed(2)}%); OPEX & Prämie sind kapazitätsbezogen und bleiben konstant\nWACC = ${(p.wacc*100).toFixed(1)}% (Kost et al. 2024, Fraunhofer ISE)`],
             ['LCOS', f1(r.lcos)+' €/MWh', 'Kosten je gespeicherter MWh (diskontiert)',
              `Durchschnittliche Kosten je gespeicherter MWh\nFormel: LCOS = (CAPEX + Σ OPEX_t/(1+r)^t) / Σ E_t/(1+r)^t\nWACC = ${(p.wacc*100).toFixed(1)}%, Lebensdauer = ${p.lifetime}a\nMethodik: NREL, Lazard LCOS v16\nEingesetzt: LCOS = (CAPEX + Σ OPEX_t) / Σ E_t = ${f1(r.lcos)} €/MWh`],
             ['Break-even Spread', r.be+' €/MWh', 'Mindest-Spread für Kostendeckung (NPV = 0)',
@@ -460,25 +469,7 @@ function renderChart() {
     const p   = state[tech][sc] || defParams(sc, tech);
     const r   = calc(sc, p);
     const col = CURVE_COLORS[`${sc}-${tech}`];
-    // Build points with vertical jumps for stack reinvest (down) and salvage (up)
-    const mainPts = [];
-    for (let i = 0; i < r.years.length; i++) {
-      const yr  = r.years[i];
-      const val = r.cum[i] / 1e6;
-      if (tech === 'Redox-Flow' && p.stack_reinvest > 0 && yr === p.stack_year) {
-        const preVal = (r.cum[i] + r.stack_cost / Math.pow(1 + p.wacc, yr)) / 1e6;
-        mainPts.push({x: yr, y: preVal});
-        mainPts.push({x: yr, y: val});
-        continue;
-      }
-      if (p.salvage > 0 && yr === p.lifetime) {
-        const preSalvage = (r.cum[i] - r.salvage_val / Math.pow(1 + p.wacc, yr)) / 1e6;
-        mainPts.push({x: yr, y: preSalvage});
-        mainPts.push({x: yr, y: val});
-        continue;
-      }
-      mainPts.push({x: yr, y: val});
-    }
+    const mainPts = r.years.map((y,i) => ({x:y, y:r.cum[i]/1e6}));
 
     datasets.push({
       label:            `Sz. ${sc}: ${tech === 'Li-Ion' ? 'Li-Ion' : 'VRFB'}`,
@@ -489,7 +480,7 @@ function renderChart() {
       pointRadius:      0,
       pointHoverRadius: 5,
       fill:             false,
-      tension:          0,
+      tension:          0.3,
     });
 
     xMax = Math.max(xMax, p.lifetime + 4);
@@ -523,64 +514,24 @@ function renderChart() {
         yPx: yA.getPixelForValue(npv),
       }));
 
-      // Spread overlapping labels vertically — check pure Y proximity (labels can collide even at different X)
+      // Spread overlapping labels vertically
       const labelOffsets = rendered.map(() => 0);
-      const MIN_LABEL_GAP = 18; // px minimum vertical gap between labels
       for (let i = 0; i < rendered.length; i++) {
         for (let j = i + 1; j < rendered.length; j++) {
+          const dx = Math.abs(rendered[i].xPx - rendered[j].xPx);
           const dy = Math.abs(rendered[i].yPx - rendered[j].yPx);
-          if (dy < MIN_LABEL_GAP) {
-            // Push apart: higher curve label goes up, lower goes down
-            if (rendered[i].yPx <= rendered[j].yPx) {
-              labelOffsets[i] = -MIN_LABEL_GAP;
-              labelOffsets[j] = +MIN_LABEL_GAP;
-            } else {
-              labelOffsets[i] = +MIN_LABEL_GAP;
-              labelOffsets[j] = -MIN_LABEL_GAP;
-            }
-          }
-        }
-      }
-
-      // Compute final label Y positions — avoid zero line, avoid dot, keep mutual gap
-      const yZeroPx = yA.getPixelForValue(0);
-      const ZERO_CLEAR = 14;
-      const LABEL_H = 16;
-      const GAP = 20;
-
-      // Step 1: base positions with peer-offset
-      const finalLabelY = rendered.map((item, idx) => {
-        let ly = item.yPx + labelOffsets[idx];
-        // avoid zero line
-        if (Math.abs(ly - yZeroPx) < ZERO_CLEAR + LABEL_H) {
-          ly = item.npv < 0
-            ? yZeroPx + ZERO_CLEAR + LABEL_H
-            : yZeroPx - ZERO_CLEAR;
-        }
-        // avoid dot itself
-        if (Math.abs(ly - item.yPx) < LABEL_H) {
-          ly = item.npv < 0 ? item.yPx + LABEL_H + 4 : item.yPx - LABEL_H - 4;
-        }
-        return ly;
-      });
-
-      // Step 2: re-check mutual gap after zero-line correction
-      for (let i = 0; i < finalLabelY.length; i++) {
-        for (let j = i + 1; j < finalLabelY.length; j++) {
-          const diff = finalLabelY[j] - finalLabelY[i];
-          if (Math.abs(diff) < GAP) {
-            const mid = (finalLabelY[i] + finalLabelY[j]) / 2;
-            finalLabelY[i] = mid - GAP / 2;
-            finalLabelY[j] = mid + GAP / 2;
+          if (dx < 40 && dy < 28) {
+            labelOffsets[i] = -14;
+            labelOffsets[j] = +14;
           }
         }
       }
 
       // Draw lifetime end markers
       rendered.forEach((item, idx) => {
-        const {xPx, yPx, npv, color, tech, sc} = item;
+        const {xPx, yPx, npv, color, tech} = item;
         const yBot = yA.bottom;
-        const labelY = finalLabelY[idx];
+        const labelY = yPx + labelOffsets[idx];
         const techShort = tech === 'Li-Ion' ? 'Li-Ion' : 'VRFB';
 
         // Dashed vertical line
@@ -593,23 +544,11 @@ function renderChart() {
         ctx.beginPath(); ctx.setLineDash([]); ctx.globalAlpha = 1;
         ctx.fillStyle = color; ctx.arc(xPx, yPx, 4, 0, Math.PI*2); ctx.fill();
 
-        // NPV label
+        // NPV label in black
+        ctx.fillStyle = '#333333';
         ctx.font = 'bold 13px Segoe UI,sans-serif';
         ctx.textAlign = 'left';
-        const labelText = `${npv.toFixed(1)} Mio€`;
-        const textX = xPx + 6;
-        const isLiIonD = tech === 'Li-Ion' && sc === 'D';
-        // Li-Ion Sz D: pin on zero line with white bg; VRFB: slightly below dot; rest: normal
-        const drawY = isLiIonD ? yZeroPx + 5 : (tech === 'Redox-Flow' ? yPx + 20 : yPx + 4);
-        ctx.save();
-        if (isLiIonD) {
-          const textW = ctx.measureText(labelText).width;
-          ctx.fillStyle = 'rgba(255,255,255,0.85)';
-          ctx.fillRect(textX - 2, drawY - 14, textW + 4, 18);
-        }
-        ctx.restore();
-        ctx.fillStyle = '#333333';
-        ctx.fillText(labelText, textX, drawY);
+        ctx.fillText(`${npv.toFixed(1)} Mio€`, xPx+6, labelY+4);
 
         // "Ende LZ" label just above x axis in black
         // If two labels share the same x pixel, offset one up and one down
@@ -709,9 +648,7 @@ function renderChart() {
             grid:{color:'#e5e7eb'}, ticks:{color:'#6b7280', stepSize:5, font:{size:13}}},
         y: {min:-450, max:100,
             title:{display:true, text:'Kumulierter Kapitalwert [Mio€]', color:'#6b7280', font:{size:14}},
-            grid:{color: ctx => ctx.tick.value === 0 ? '#e53e3e' : '#e5e7eb',
-                  lineWidth: ctx => ctx.tick.value === 0 ? 2 : 1},
-            ticks:{color:'#6b7280', stepSize:50, font:{size:13}, callback:v=>v+' Mio€'}},
+            grid:{color:'#e5e7eb'}, ticks:{color:'#6b7280', stepSize:50, font:{size:13}, callback:v=>v+' Mio€'}},
       },
       plugins: {
         legend: {display: true, labels: {color:'#1a1d2e', font:{size:14}, boxWidth:24, padding:10, usePointStyle: false,
